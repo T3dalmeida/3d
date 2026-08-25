@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ISAURA · Bateria de Testes</title>
+<style>
+:root{color-scheme:dark;--bg:#08101b;--panel:#101a29;--panel2:#0c1522;--line:#253751;--text:#eef5ff;--muted:#8fa2bc;--blue:#6aa8ff;--green:#43d68d;--red:#ff6c7d;--amber:#efbd55}
+*{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#112440 0,#08101b 42%);color:var(--text);font-family:Segoe UI,Arial,sans-serif;min-height:100vh}
+header{position:sticky;top:0;z-index:10;background:rgba(8,16,27,.95);border-bottom:1px solid var(--line)}
+.wrap{max-width:960px;margin:auto;padding:14px 16px}.top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:19px;margin-right:8px}button{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:11px;padding:9px 12px;cursor:pointer}
+.on{outline:2px solid var(--blue);border-color:transparent}.progress{height:6px;background:#162338;border-radius:20px;overflow:hidden;margin-top:10px}.progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--green));transition:.2s}
+main{max-width:960px;margin:auto;padding:16px}.intro{background:rgba(16,26,41,.78);border:1px solid var(--line);border-radius:15px;padding:13px 14px;color:#cbd8ea;font-size:13px;line-height:1.45}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.meta{margin-left:auto;color:var(--muted);font-size:13px;align-self:center}.card{background:linear-gradient(180deg,#111d2e,#0e1826);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 18px 50px rgba(0,0,0,.18)}
+.cardhead{display:flex;gap:12px;align-items:flex-start}.num{width:42px;height:42px;border-radius:12px;background:#0b1523;display:grid;place-items:center;color:var(--blue);font-weight:800}.title{font-size:20px;font-weight:800}.group{color:var(--muted);font-size:12px;margin-top:3px}.tag{display:inline-block;margin-left:7px;padding:3px 7px;border-radius:20px;background:#16243a;color:#bcd2f4;font-size:11px}
+.box{margin-top:14px;border-radius:12px;padding:12px 13px;line-height:1.45}.do{background:#0b1625;border:1px solid #213b5e}.check{background:#0e241c;border:1px solid #285640}.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;margin-bottom:5px;color:#8da9cf}.check .label{color:#8fe0b8}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}.actions button{padding:11px;font-weight:800}.ok.sel{border-color:var(--green);background:#123226}.bad.sel{border-color:var(--red);background:#351821}.skip.sel{border-color:var(--amber);background:#332916}.note{width:100%;margin-top:10px;padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#0a1421;color:var(--text)}
+.nav{display:flex;justify-content:space-between;gap:8px;margin-top:13px}.nav button{min-width:120px}.empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}@media(max-width:640px){.brand{width:100%}.meta{width:100%;margin-left:0}.actions{grid-template-columns:1fr}.card{padding:14px}.nav button{min-width:0;flex:1}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><div class="top"><div class="brand">ISAURA · Testes</div><button class="platform on" data-p="PC">💻 PC</button><button class="platform" data-p="Android">📱 Android</button><span id="version"></span></div><div class="progress"><div id="bar"></div></div></div></header>
+<main><div class="intro"><b>Uma única bateria.</b> “Completo inicial” mostra todos os testes. “Só desta versão” mostra apenas os testes novos/alterados. Nada de uma aba nova por versão.</div><div class="toolbar"><button class="mode on" data-m="all">Completo inicial</button><button class="mode" data-m="version">Só desta versão</button><button id="failed">❌ Falharam</button><span id="meta" class="meta"></span></div><div id="content"></div></main>
+<script>
+let ALL=[];let platform='PC',mode='all',onlyFailed=false,index=0;
+function key(t){return 'isaura|'+t.platform+'|'+t.version+'|'+t.no+'|'+t.base}
+function state(t){try{return JSON.parse(localStorage.getItem(key(t))||'{}')}catch{return {}}}
+function save(t,s){localStorage.setItem(key(t),JSON.stringify(s))}
+function list(){let a=ALL.filter(x=>x.platform===platform);if(mode==='version')a=a.filter(x=>x.type==='Versão');if(onlyFailed)a=a.filter(x=>state(x).status==='bad');return a}
+function render(){const a=list();const v=ALL.find(x=>x.platform===platform)?.version||'';document.getElementById('version').textContent=v?'V'+v:'';if(!a.length){document.getElementById('content').innerHTML='<div class="empty">Nenhum teste neste filtro.</div>';document.getElementById('meta').textContent='';document.getElementById('bar').style.width='0%';return}index=Math.max(0,Math.min(index,a.length-1));const t=a[index],s=state(t);const done=a.filter(x=>state(x).status).length;document.getElementById('meta').textContent=(index+1)+' / '+a.length+' · '+done+' concluídos';document.getElementById('bar').style.width=Math.round(done/a.length*100)+'%';document.getElementById('content').innerHTML=`<article class="card"><div class="cardhead"><div class="num">${t.no}</div><div><div class="title">${t.area} <span class="tag">${t.type}</span></div><div class="group">${t.group} · ${t.base}</div></div></div><div class="box do"><div class="label">Faz / Diz</div>${t.do}</div><div class="box check"><div class="label">Confirma</div>${t.check}</div><div class="actions"><button class="ok ${s.status==='ok'?'sel':''}" data-s="ok">✅ OK</button><button class="bad ${s.status==='bad'?'sel':''}" data-s="bad">❌ Não OK</button><button class="skip ${s.status==='skip'?'sel':''}" data-s="skip">⏭ N/A</button></div><input id="note" class="note" placeholder="Observação curta…" value="${s.note||''}"><div class="nav"><button id="prev">← Anterior</button><button id="next">Seguinte →</button></div></article>`;document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{let x=state(t);x.status=b.dataset.s;save(t,x);render()});document.getElementById('note').oninput=e=>{let x=state(t);x.note=e.target.value;save(t,x)};document.getElementById('prev').onclick=()=>{index--;render()};document.getElementById('next').onclick=()=>{index++;render()}}
+document.querySelectorAll('.platform').forEach(b=>b.onclick=()=>{platform=b.dataset.p;index=0;onlyFailed=false;document.querySelectorAll('.platform').forEach(x=>x.classList.toggle('on',x===b));document.getElementById('failed').classList.remove('on');render()});document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{mode=b.dataset.m;index=0;document.querySelectorAll('.mode').forEach(x=>x.classList.toggle('on',x===b));render()});document.getElementById('failed').onclick=e=>{onlyFailed=!onlyFailed;index=0;e.currentTarget.classList.toggle('on',onlyFailed);render()};
+fetch('data.json?ts='+Date.now(),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.json()}).then(d=>{ALL=d;render()}).catch(e=>{document.getElementById('content').innerHTML='<div class="empty">Erro a carregar testes: '+String(e)+'</div>'});
+</script>
+</body>
+</html>
